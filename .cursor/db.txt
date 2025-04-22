@@ -1,0 +1,177 @@
+Table Users {
+    id int [pk, increment, not null] // Primary key, auto-incremented
+    username varchar(50) [unique, not null] // Username
+    password varchar(255) [not null] // Hashed password
+    email varchar(100) [unique, not null] // Unique email
+    role varchar(20) [not null, default: 'user'] // Role: 'user', 'admin', etc.
+    profile_picture_url varchar(255) // URL to profile picture
+    bio text // Short user bio or description
+    location varchar(100) // User location for location-based features
+    date_of_birth date // User's date of birth
+    created_at datetime [default: `now()`, not null]
+    updated_at datetime [default: `now()`]
+
+    // Security and Privacy
+    is_verified boolean [default: false] // Account verification status
+    last_login datetime // Tracks the last login time
+    
+    // User Settings and Preferences
+    notification_preferences json // Preferences for notifications (e.g., email, push)
+
+    // Engagement and Activity Tracking
+    post_count int [default: 0] // User's post count
+    account_status enum('active', 'suspended', 'deactivated') [default: 'active'] // Account status for moderation
+
+    // Subscription and Premium Features
+    subscription_level enum('free', 'premium', 'vip') [default: 'free'] // Membership level for premium access
+    subscription_expiration date // Date of premium subscription expiry
+}
+
+
+Table Posts {
+    id int [pk, increment, not null] // Primary key, auto-incremented
+    user_id int [ref: > Users.id, not null] // Foreign key linking to Users
+    title varchar(255) [not null] // Post title
+    content text // Main post content
+    media_url varchar(255) // URL for associated images or videos
+    created_at datetime [default: `now()`, not null]
+    updated_at datetime [default: `now()`]
+
+    // Engagement Tracking
+    likes_count int [default: 0, not null] // Number of likes
+    comments_count int [default: 0, not null] // Number of comments
+    shares_count int [default: 0, not null] // Number of shares (if shareable)
+    views_count int [default: 0, not null] // Number of views for feed algorithm
+
+    // Visibility and Privacy
+    visibility enum('public', 'private', 'followers') [default: 'public', not null] // Post visibility options
+    
+    // Content Categories and Tags
+    tags json // JSON array to hold tags associated with the post
+
+    // Engagement and Interactions
+    allow_comments boolean [default: true] // Enables or disables comments on this post
+    is_pinned boolean [default: false] // Pins post to top of user’s profile or community feed
+}
+
+
+Table Comments {
+    id int [pk, increment, not null] // Primary key, auto-incremented
+    post_id int [ref: > Posts.id, not null] // Foreign key linking to Posts
+    user_id int [ref: > Users.id, not null] // Foreign key linking to Users
+    parent_id int [ref: > Comments.id, default: null] // Self-referencing for nested comments
+    content text [not null] // Comment content
+    created_at datetime [default: `now()`, not null]
+    updated_at datetime [default: `now()`]
+
+    // Engagement Tracking
+    likes_count int [default: 0, not null] // Number of likes on the comment
+    replies_count int [default: 0, not null] // Number of replies to this comment
+
+    // Additional Metadata
+    is_pinned boolean [default: false] // Indicates if the comment is pinned to the top
+    anonymous boolean [default: false] // Option for anonymous comments
+}
+
+
+Table Communities {
+    id int [pk, increment, not null] // Primary key, auto-incremented
+    creator_id int [ref: > Users.id, not null] // Foreign key linking to Users (community creator)
+    name varchar(100) [unique, not null] // Unique community name
+    description text // Description of the community
+    created_at datetime [default: `now()`, not null]
+    updated_at datetime [default: `now()`]
+
+    // Community Settings
+    visibility enum('public', 'private', 'restricted') [default: 'public', not null] // Public, private, or restricted community
+    member_count int [default: 0, not null] // Tracks total members
+    is_verified boolean [default: false] // Indicates if community is verified (official)
+
+    // Community Rules and Moderation
+    rules text // Community rules and guidelines
+    
+    // Engagement and Content Controls
+    post_count int [default: 0, not null] // Total number of posts in the community
+    tags json // JSON array of tags to categorize the community
+    
+    // Additional Community Features
+    is_featured boolean [default: false] // Marks community as featured for promotion
+    cover_image_url varchar(255) // Cover image for the community
+}
+
+
+Table User_Communities {
+    user_id int [ref: > Users.id, not null]
+    community_id int [ref: > Communities.id, not null]
+    role varchar(20) [default: 'member']
+    joined_at datetime [default: `now()`, not null]
+    primary key (user_id, community_id)
+}
+
+Table Likes {
+    id int [pk, increment, not null]
+    user_id int [ref: > Users.id, not null]
+    post_id int [ref: > Posts.id, not null]
+    liked_at datetime [default: `now()`, not null]
+}
+
+Table Messages {
+    id int [pk, increment, not null]
+    sender_id int [ref: > Users.id, not null]
+    receiver_id int [ref: > Users.id, not null]
+    content text [not null]
+    sent_at datetime [default: `now()`, not null]
+    status enum('sent', 'delivered', 'read') [default: 'sent']
+}
+
+Table Follows {
+    follower_id int [ref: > Users.id, not null]
+    followee_id int [ref: > Users.id, not null]
+    followed_at datetime [default: `now()`, not null]
+    primary key (follower_id, followee_id)
+}
+
+Table Notifications {
+    id int [pk, increment, not null]
+    user_id int [ref: > Users.id, not null] // Notification recipient
+    type enum('like', 'comment', 'follow', 'chat') [not null] // Type of notification
+    reference_id int // Related entity (post, comment, etc.)
+    message varchar(255) [not null]
+    is_read boolean [default: false]
+    created_at datetime [default: `now()`, not null]
+}
+
+Table Subtitles {
+    id int [pk, increment, not null]
+    name varchar(100) [unique, not null]
+    description text
+    created_at datetime [default: `now()`, not null]
+}
+
+Table User_Subtitles {
+    user_id int [ref: > Users.id, not null]
+    subtitle_id int [ref: > Subtitles.id, not null]
+    subscribed_at datetime [default: `now()`, not null]
+    primary key (user_id, subtitle_id)
+}
+
+Table LiveStreams {
+    id int [pk, increment, not null]
+    user_id int [ref: > Users.id, not null] // Host user
+    title varchar(255) [not null]
+    status enum('live', 'ended') [default: 'live', not null]
+    started_at datetime [default: `now()`, not null]
+    ended_at datetime
+}
+
+Table Roles {
+    id int [pk, increment, not null] // Primary key, auto-incremented
+    name varchar(50) [unique, not null] // Role name (e.g., 'user', 'admin', 'moderator')
+    description text // Description of the role's permissions
+    created_at datetime [default: `now()`, not null] // Timestamp of role creation
+    updated_at datetime [default: `now()`, not null] // Timestamp of the last role update
+}
+
+
+
+Ref: "Communities"."updated_at" < "Communities"."visibility"
