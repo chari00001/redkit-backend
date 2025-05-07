@@ -26,7 +26,7 @@ app.get("/", (req, res) => {
 });
 
 // Post rotalarını ekle
-app.use("/api/posts", postRoutes);
+app.use("/posts", postRoutes);
 
 // Hata yakalama middleware'i
 app.use((err, req, res, next) => {

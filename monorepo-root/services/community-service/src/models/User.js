@@ -34,73 +34,66 @@ const User = sequelize.define(
     },
     profile_picture_url: {
       type: DataTypes.STRING(255),
-      allowNull: true,
     },
     bio: {
       type: DataTypes.TEXT,
-      allowNull: true,
     },
     location: {
       type: DataTypes.STRING(100),
-      allowNull: true,
     },
     date_of_birth: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    created_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
-    },
-    updated_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
+      type: DataTypes.DATEONLY,
     },
     is_verified: {
       type: DataTypes.BOOLEAN,
-      allowNull: false,
       defaultValue: false,
+      allowNull: false,
     },
     last_login: {
       type: DataTypes.DATE,
-      allowNull: true,
     },
     notification_preferences: {
       type: DataTypes.JSONB,
-      allowNull: true,
     },
     post_count: {
       type: DataTypes.INTEGER,
-      allowNull: false,
       defaultValue: 0,
+      allowNull: false,
     },
     account_status: {
       type: DataTypes.STRING(20),
-      allowNull: false,
       defaultValue: "active",
+      allowNull: false,
       validate: {
         isIn: [["active", "suspended", "deactivated"]],
       },
     },
     subscription_level: {
       type: DataTypes.STRING(20),
-      allowNull: false,
       defaultValue: "free",
+      allowNull: false,
       validate: {
         isIn: [["free", "premium", "vip"]],
       },
     },
     subscription_expiration: {
+      type: DataTypes.DATEONLY,
+    },
+    created_at: {
       type: DataTypes.DATE,
-      allowNull: true,
+      defaultValue: DataTypes.NOW,
+      allowNull: false,
+    },
+    updated_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+      allowNull: false,
     },
   },
   {
+    tableName: "users",
     timestamps: true,
     underscored: true,
-    tableName: "users",
     createdAt: "created_at",
     updatedAt: "updated_at",
   }

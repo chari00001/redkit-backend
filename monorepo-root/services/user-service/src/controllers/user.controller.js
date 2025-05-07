@@ -1,4 +1,4 @@
-const User = require("../models/user.model");
+const { User, Follow } = require("../models");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
@@ -56,9 +56,16 @@ exports.register = async (req, res) => {
       expiresIn: "1d",
     });
 
+    const verifyToken = jwt.sign(
+      { id: newUser.id, action: "verify_account" },
+      JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
     res.status(201).json({
       message: "Kullanıcı başarıyla oluşturuldu",
       token,
+      verifyToken,
       user: {
         id: newUser.id,
         username: newUser.username,
@@ -408,6 +415,7 @@ exports.verifyAccount = async (req, res) => {
 exports.updateNotificationPreferences = async (req, res) => {
   try {
     const userId = req.user.id;
+
     const { notification_preferences } = req.body;
 
     const user = await User.findByPk(userId);
@@ -436,6 +444,8 @@ exports.updateNotificationPreferences = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
   try {
     // Sadece admin yetkisi kontrolü
+    console.log(req.user);
+
     if (req.user.role !== "admin") {
       return res.status(403).json({ message: "Bu işlem için yetkiniz yok" });
     }
@@ -709,33 +719,40 @@ exports.getFollowers = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
 
-    const { count, rows: follows } = await Follow.findAndCountAll({
-      where: { followee_id: userId },
-      limit,
-      offset,
+    const followers = await User.findAll({
+      attributes: ["id", "username", "profile_picture_url", "bio"],
       include: [
         {
           model: User,
-          as: "follower",
-          attributes: ["id", "username", "profile_picture_url"],
+          as: "following",
+          attributes: [],
+          through: {
+            attributes: [],
+            where: { followee_id: userId },
+          },
         },
       ],
-      order: [["followed_at", "DESC"]],
+      limit,
+      offset,
+      subQuery: false,
     });
 
-    const followers = follows.map((follow) => follow.follower);
+    const totalFollowers = await Follow.count({
+      where: { followee_id: userId },
+    });
 
     res.json({
       followers,
-      totalPages: Math.ceil(count / limit),
-      currentPage: page,
-      totalFollowers: count,
+      pagination: {
+        total: totalFollowers,
+        page,
+        limit,
+        totalPages: Math.ceil(totalFollowers / limit),
+      },
     });
   } catch (error) {
     console.error("Takipçileri getirme hatası:", error);
-    res
-      .status(500)
-      .json({ message: "Sunucu hatası, lütfen daha sonra tekrar deneyin" });
+    res.status(500).json({ message: "Sunucu hatası" });
   }
 };
 
@@ -749,32 +766,39 @@ exports.getFollowing = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
 
-    const { count, rows: follows } = await Follow.findAndCountAll({
-      where: { follower_id: userId },
-      limit,
-      offset,
+    const following = await User.findAll({
+      attributes: ["id", "username", "profile_picture_url", "bio"],
       include: [
         {
           model: User,
-          as: "followee",
-          attributes: ["id", "username", "profile_picture_url"],
+          as: "followers",
+          attributes: [],
+          through: {
+            attributes: [],
+            where: { follower_id: userId },
+          },
         },
       ],
-      order: [["followed_at", "DESC"]],
+      limit,
+      offset,
+      subQuery: false,
     });
 
-    const following = follows.map((follow) => follow.followee);
+    const totalFollowing = await Follow.count({
+      where: { follower_id: userId },
+    });
 
     res.json({
       following,
-      totalPages: Math.ceil(count / limit),
-      currentPage: page,
-      totalFollowing: count,
+      pagination: {
+        total: totalFollowing,
+        page,
+        limit,
+        totalPages: Math.ceil(totalFollowing / limit),
+      },
     });
   } catch (error) {
     console.error("Takip edilenleri getirme hatası:", error);
-    res
-      .status(500)
-      .json({ message: "Sunucu hatası, lütfen daha sonra tekrar deneyin" });
+    res.status(500).json({ message: "Sunucu hatası" });
   }
 };

@@ -29,6 +29,21 @@ const Comment = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    created_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+      allowNull: false,
+    },
+    updated_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+      allowNull: false,
+    },
+    likes_count: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+    },
     parent_id: {
       type: DataTypes.INTEGER,
       allowNull: true,
@@ -37,9 +52,10 @@ const Comment = sequelize.define(
         key: "id",
       },
     },
-    likes_count: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
+    is_edited: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false,
     },
   },
   {
@@ -61,14 +77,14 @@ Comment.associate = (models) => {
     as: "post",
   });
 
-  Comment.belongsTo(Comment, {
-    foreignKey: "parent_id",
-    as: "parent",
-  });
-
   Comment.hasMany(Comment, {
     foreignKey: "parent_id",
     as: "replies",
+  });
+
+  Comment.belongsTo(Comment, {
+    foreignKey: "parent_id",
+    as: "parent",
   });
 };
 

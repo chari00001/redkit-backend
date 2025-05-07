@@ -17,6 +17,7 @@ UserSubtitle.init(
         key: "id",
       },
       primaryKey: true,
+      onDelete: "CASCADE",
     },
     subtitle_id: {
       type: DataTypes.INTEGER,
@@ -26,6 +27,7 @@ UserSubtitle.init(
         key: "id",
       },
       primaryKey: true,
+      onDelete: "CASCADE",
     },
     subscribed_at: {
       type: DataTypes.DATE,

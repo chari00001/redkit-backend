@@ -4,14 +4,10 @@ const sequelize = require("../db");
 const Like = sequelize.define(
   "Like",
   {
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-    },
     user_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      primaryKey: true,
       references: {
         model: "users",
         key: "id",
@@ -20,23 +16,34 @@ const Like = sequelize.define(
     post_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      primaryKey: true,
       references: {
         model: "posts",
         key: "id",
       },
     },
+    liked_at: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
   },
   {
-    timestamps: true,
+    timestamps: false,
     underscored: true,
     tableName: "likes",
-    indexes: [
-      {
-        unique: true,
-        fields: ["user_id", "post_id"],
-      },
-    ],
   }
 );
+
+// İlişkileri tanımlama
+Like.associate = (models) => {
+  Like.belongsTo(models.User, {
+    foreignKey: "user_id",
+  });
+
+  Like.belongsTo(models.Post, {
+    foreignKey: "post_id",
+  });
+};
 
 module.exports = Like;

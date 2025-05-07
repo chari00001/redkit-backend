@@ -18,44 +18,65 @@ const Post = sequelize.define(
       },
     },
     title: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: false,
     },
     content: {
       type: DataTypes.TEXT,
-      allowNull: false,
-    },
-    media_url: {
-      type: DataTypes.STRING,
       allowNull: true,
     },
-    visibility: {
-      type: DataTypes.ENUM("public", "private", "followers"),
-      defaultValue: "public",
+    media_url: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
     },
-    tags: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
-      defaultValue: [],
+    created_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+      allowNull: false,
     },
-    allow_comments: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true,
-    },
-    views_count: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
+    updated_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+      allowNull: false,
     },
     likes_count: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
-    },
-    shares_count: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
+      allowNull: false,
     },
     comments_count: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
+      allowNull: false,
+    },
+    shares_count: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+    },
+    views_count: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+    },
+    visibility: {
+      type: DataTypes.ENUM("public", "private", "followers"),
+      defaultValue: "public",
+      allowNull: false,
+    },
+    tags: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+    },
+    allow_comments: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+      allowNull: false,
+    },
+    is_pinned: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false,
     },
   },
   {

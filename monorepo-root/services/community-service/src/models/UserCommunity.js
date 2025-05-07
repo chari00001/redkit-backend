@@ -1,61 +1,79 @@
-const { DataTypes, Model } = require("sequelize");
+const { DataTypes } = require("sequelize");
 const sequelize = require("../db");
+const User = require("./User");
+const Community = require("./Community");
 
-/**
- * Kullanıcı-Topluluk ilişki modeli
- * User_Communities tablosunu temsil eder
- */
-class UserCommunity extends Model {}
-
-UserCommunity.init(
+const UserCommunity = sequelize.define(
+  "UserCommunity",
   {
     user_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      primaryKey: true,
       references: {
         model: "users",
         key: "id",
       },
-      primaryKey: true,
       onDelete: "CASCADE",
     },
     community_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      primaryKey: true,
       references: {
         model: "communities",
         key: "id",
       },
-      primaryKey: true,
       onDelete: "CASCADE",
     },
     role: {
       type: DataTypes.STRING(20),
-      allowNull: false,
       defaultValue: "member",
+      allowNull: false,
       validate: {
         isIn: [["member", "moderator", "admin"]],
       },
     },
     joined_at: {
       type: DataTypes.DATE,
-      allowNull: false,
       defaultValue: DataTypes.NOW,
+      allowNull: false,
     },
   },
   {
-    sequelize,
-    modelName: "user_community",
     tableName: "user_communities",
     timestamps: false,
     underscored: true,
     indexes: [
       {
-        fields: ["community_id", "role"],
         name: "idx_uc_comm_role",
+        fields: ["community_id", "role"],
       },
     ],
   }
 );
+
+// İlişkileri tanımla - modeller arası
+User.belongsToMany(Community, {
+  through: UserCommunity,
+  foreignKey: "user_id",
+  otherKey: "community_id",
+});
+
+Community.belongsToMany(User, {
+  through: UserCommunity,
+  foreignKey: "community_id",
+  otherKey: "user_id",
+});
+
+UserCommunity.belongsTo(User, {
+  foreignKey: "user_id",
+  targetKey: "id",
+});
+
+UserCommunity.belongsTo(Community, {
+  foreignKey: "community_id",
+  targetKey: "id",
+});
 
 module.exports = UserCommunity;

@@ -1,4 +1,5 @@
-const { Post } = require("../models");
+const db = require("../models");
+const sequelize = require("../db");
 const { Op } = require("sequelize");
 
 // Yeni gönderi oluştur
@@ -6,7 +7,10 @@ exports.createPost = async (req, res) => {
   try {
     const { title, content, media_url, visibility, tags, allow_comments } =
       req.body;
-    const post = await Post.create({
+
+    console.log(tags);
+
+    const post = await db.Post.create({
       user_id: req.user.id,
       title,
       content,
@@ -22,6 +26,8 @@ exports.createPost = async (req, res) => {
       data: post,
     });
   } catch (error) {
+    console.log(error);
+
     res.status(500).json({
       success: false,
       message: "Post oluşturulurken bir hata oluştu",
@@ -33,7 +39,7 @@ exports.createPost = async (req, res) => {
 // Gönderiyi güncelle
 exports.updatePost = async (req, res) => {
   try {
-    const post = await Post.findOne({
+    const post = await db.Post.findOne({
       where: {
         id: req.params.id,
         user_id: req.user.id,
@@ -66,7 +72,7 @@ exports.updatePost = async (req, res) => {
 // Gönderiyi sil
 exports.deletePost = async (req, res) => {
   try {
-    const result = await Post.destroy({
+    const result = await db.Post.destroy({
       where: {
         id: req.params.id,
         user_id: req.user.id,
@@ -113,7 +119,7 @@ exports.getPost = async (req, res) => {
       };
     }
 
-    const post = await Post.findOne({ where: whereClause });
+    const post = await db.Post.findOne({ where: whereClause });
 
     if (!post) {
       return res.status(404).json({
@@ -168,10 +174,10 @@ exports.listPosts = async (req, res) => {
 
     // Etiket filtresi
     if (tag) {
-      where.tags = { [Op.contains]: [tag] };
+      where.tags = { [db.Op.contains]: [tag] };
     }
 
-    const { count, rows } = await Post.findAndCountAll({
+    const { count, rows } = await db.Post.findAndCountAll({
       where,
       limit: parseInt(limit),
       offset: parseInt(offset),
@@ -200,37 +206,96 @@ exports.listPosts = async (req, res) => {
 
 // Gönderiyi beğen/beğenmekten vazgeç
 exports.toggleLike = async (req, res) => {
+  const postId = req.params.id;
+  const userId = req.user.id;
+
   try {
-    const post = await Post.findByPk(req.params.id);
+    // Transaction başlat
+    const t = await sequelize.transaction();
 
-    if (!post) {
-      return res.status(404).json({
-        success: false,
-        message: "Post bulunamadı",
+    try {
+      // Post var mı kontrol et
+      const post = await db.Post.findByPk(postId, { transaction: t });
+
+      if (!post) {
+        await t.rollback();
+        return res.status(404).json({
+          success: false,
+          message: "Post bulunamadı",
+        });
+      }
+
+      // Mevcut beğeni var mı kontrol et
+      const existingLike = await sequelize.query(
+        "SELECT * FROM likes WHERE user_id = :userId AND post_id = :postId",
+        {
+          replacements: { userId, postId },
+          type: sequelize.QueryTypes.SELECT,
+          transaction: t,
+        }
+      );
+
+      let message = "";
+
+      if (existingLike && existingLike.length > 0) {
+        // Beğeni varsa, beğeniyi kaldır
+        await sequelize.query(
+          "DELETE FROM likes WHERE user_id = :userId AND post_id = :postId",
+          {
+            replacements: { userId, postId },
+            type: sequelize.QueryTypes.DELETE,
+            transaction: t,
+          }
+        );
+
+        // Post beğeni sayısını azalt
+        await post.decrement("likes_count", { transaction: t });
+        message = "Post beğenisi kaldırıldı";
+      } else {
+        // Beğeni yoksa, beğeni ekle
+        await sequelize.query(
+          "INSERT INTO likes (user_id, post_id, liked_at) VALUES (:userId, :postId, NOW())",
+          {
+            replacements: { userId, postId },
+            type: sequelize.QueryTypes.INSERT,
+            transaction: t,
+          }
+        );
+
+        // Post beğeni sayısını artır
+        await post.increment("likes_count", { transaction: t });
+        message = "Post beğenildi";
+      }
+
+      // Transaction'ı tamamla
+      await t.commit();
+
+      res.json({
+        success: true,
+        message,
       });
+    } catch (error) {
+      // Hata durumunda transaction'ı geri al
+      await t.rollback();
+      throw error;
     }
-
-    // TODO: Like tablosu oluşturulacak
-    // Şimdilik sadece sayacı artırıyoruz
-    await post.increment("likes_count");
-
-    res.json({
-      success: true,
-      message: "Post beğenildi",
-    });
   } catch (error) {
+    console.error("Beğeni işlemi hatası:", error);
     res.status(500).json({
       success: false,
-      message: "Post beğenilirken bir hata oluştu",
+      message: "Beğeni işlemi sırasında bir hata oluştu",
       error: error.message,
     });
   }
 };
 
-// Gönderiyi paylaş
+// Post paylaşma
 exports.sharePost = async (req, res) => {
+  const postId = req.params.id;
+
   try {
-    const post = await Post.findByPk(req.params.id);
+    // Post var mı kontrol et
+    const post = await db.Post.findByPk(postId);
 
     if (!post) {
       return res.status(404).json({
@@ -239,13 +304,14 @@ exports.sharePost = async (req, res) => {
       });
     }
 
-    // TODO: Share tablosu oluşturulacak
-    // Şimdilik sadece sayacı artırıyoruz
+    // Paylaşım sayısını artır
     await post.increment("shares_count");
+
+    // Gerçek bir paylaşım mekanizması burada eklenebilir
 
     res.json({
       success: true,
-      message: "Post paylaşıldı",
+      message: "Post başarıyla paylaşıldı",
     });
   } catch (error) {
     res.status(500).json({

@@ -14,6 +14,10 @@ router.post("/forgot-password", userController.forgotPassword);
 router.post("/reset-password", userController.resetPassword);
 router.get("/verify/:token", userController.verifyAccount);
 
+// Takipçi ve takip edilenler rotaları (ID tabanlı rotalardan ÖNCE tanımlanmalı)
+router.get("/followers", authMiddleware, userController.getFollowers);
+router.get("/following", authMiddleware, userController.getFollowing);
+
 // Kimlik doğrulama gerektiren rotalar
 router.get("/me", authMiddleware, userController.getProfile);
 router.put("/me", authMiddleware, userController.updateProfile);
@@ -32,10 +36,8 @@ router.put("/:id", authMiddleware, userController.updateUser);
 router.delete("/:id", authMiddleware, userController.deleteUser);
 router.put("/:id/status", authMiddleware, userController.updateUserStatus);
 
-// Kullanıcı ilişkileri
+// Kullanıcı takip işlemleri
 router.post("/follow/:id", authMiddleware, userController.followUser);
 router.delete("/follow/:id", authMiddleware, userController.unfollowUser);
-router.get("/followers", authMiddleware, userController.getFollowers);
-router.get("/following", authMiddleware, userController.getFollowing);
 
 module.exports = router;

@@ -4,14 +4,15 @@ const bodyParser = require("body-parser");
 const morgan = require("morgan");
 const helmet = require("helmet");
 const sequelize = require("./db");
-const User = require("./models/user.model");
+const { User } = require("./models");
 
 // Kullanıcı rotalarını içe aktarma
 const userRoutes = require("./routes/user.routes");
 
 // Uygulama yapılandırması
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = 3010;
+console.log(`PORT: ${PORT}`);
 
 // Middleware
 app.use(cors());
@@ -44,7 +45,7 @@ app.use((err, req, res, next) => {
 
 // Veritabanını senkronize et ve sunucuyu başlat
 sequelize
-  .sync({ alter: true })
+  .sync({ alter: false })
   .then(() => {
     console.log("Veritabanı senkronize edildi");
     app.listen(PORT, () => {

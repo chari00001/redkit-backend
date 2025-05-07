@@ -6,7 +6,7 @@ const validationMiddleware = require("../middleware/validation.middleware.js");
 
 // Test middleware
 const testAuth = (req, res, next) => {
-  req.user = { id: 3, email: "test@test.com" };
+  req.user = { id: 3, email: "cagri@gmail.com" };
   next();
 };
 
