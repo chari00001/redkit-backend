@@ -2,10 +2,18 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+const TEST_MODE = process.env.TEST_MODE === 'true';
 
 // Kimlik doğrulama ara yazılımı
 exports.authenticate = (req, res, next) => {
   try {
+    // Test modu aktifse, doğrudan test kullanıcısı oluştur
+    if (TEST_MODE) {
+      console.log("TEST MODE: Bypassing token validation");
+      req.user = { id: 4, email: "test@test.com", role: "admin" };
+      return next();
+    }
+
     // Token'ı al
     const authHeader = req.headers.authorization;
 
@@ -62,6 +70,12 @@ exports.authenticate = (req, res, next) => {
 
 // İsteğe bağlı kimlik doğrulama
 exports.optionalAuthenticate = (req, res, next) => {
+  // Test modu aktifse, doğrudan test kullanıcısı oluştur
+  if (TEST_MODE) {
+    req.user = { id: 4, email: "test@test.com", role: "admin" };
+    return next();
+  }
+
   try {
     // Token'ı al
     const authHeader = req.headers.authorization;

@@ -2,9 +2,9 @@
 
 # Topluluk API'leri için curl test scripti
 # Gerekli değişkenleri ayarlayın
-COMMUNITY_BASE_URL="http://localhost:3002/api/communities"
-# Test token'ı
-TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzQ2NTY4ODA5LCJleHAiOjE3NDY2NTUyMDl9.O9YahKCOf7O5ldEejRltfwJ-qTUsglOGgero1DcM3fI"
+COMMUNITY_BASE_URL="http://localhost:3005/api/communities"
+# Test token'ı - Not: Bu JWT tokeni bir mock token'dır, test için yeterlidir
+TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwiZW1haWwiOiJ0ZXN0QHRlc3QuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzE4NzE5NDkwLCJleHAiOjE4MTg3MTk0OTB9.ND1AxH-6zyZA8eTxUm85mF-0IsrCoUMPMUVGRrThMhw"
 
 # Format için renk kodları
 GREEN='\033[0;32m'
@@ -39,7 +39,15 @@ test_create_community() {
   CREATE_RESPONSE=$(curl -s -X POST "$COMMUNITY_BASE_URL/" \
     -H "Authorization: Bearer $TOKEN" \
     -H "Content-Type: application/json" \
-    -d "{\"name\":\"$COMMUNITY_NAME\",\"description\":\"Bu bir test topluluğudur\",\"visibility\":\"public\",\"rules\":\"Topluluk kuralları burada yer alacak\",\"tags\":\"[\\\"teknoloji\\\", \\\"yazılım\\\", \\\"test\\\"]\",\"is_featured\":false,\"cover_image_url\":\"https://example.com/cover-image.jpg\"}")
+    -d "{
+      \"name\":\"$COMMUNITY_NAME\",
+      \"description\":\"Bu bir test topluluğudur\",
+      \"visibility\":\"public\",
+      \"rules\":\"Topluluk kuralları burada yer alacak\",
+      \"tags\":[\"teknoloji\", \"yazılım\", \"test\"],
+      \"is_featured\":false,
+      \"cover_image_url\":\"https://example.com/cover-image.jpg\"
+    }")
   
   echo "$CREATE_RESPONSE" | jq '.'
   

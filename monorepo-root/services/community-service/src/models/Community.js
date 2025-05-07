@@ -8,7 +8,6 @@ const Community = sequelize.define(
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
-      allowNull: false,
     },
     creator_id: {
       type: DataTypes.INTEGER,
@@ -17,7 +16,6 @@ const Community = sequelize.define(
         model: "users",
         key: "id",
       },
-      onDelete: "CASCADE",
     },
     name: {
       type: DataTypes.STRING(100),
@@ -26,68 +24,52 @@ const Community = sequelize.define(
     },
     description: {
       type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    rules: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
     visibility: {
-      type: DataTypes.STRING(20),
+      type: DataTypes.STRING,
       defaultValue: "public",
-      allowNull: false,
       validate: {
-        isIn: [["public", "private", "restricted"]],
-      },
+        isIn: [["public", "private", "restricted"]]
+      }
+    },
+    tags: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+      defaultValue: [],
     },
     member_count: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
-      allowNull: false,
-    },
-    is_verified: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-      allowNull: false,
-    },
-    rules: {
-      type: DataTypes.TEXT,
     },
     post_count: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
-      allowNull: false,
-    },
-    tags: {
-      type: DataTypes.JSONB,
     },
     is_featured: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
-      allowNull: false,
     },
     cover_image_url: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
-      allowNull: false,
     },
     updated_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
-      allowNull: false,
     },
   },
   {
     tableName: "communities",
     timestamps: true,
     underscored: true,
-    createdAt: "created_at",
-    updatedAt: "updated_at",
-    indexes: [
-      {
-        name: "idx_comm_membercount",
-        fields: ["member_count", "is_verified"],
-        order: [["member_count", "DESC"]],
-      },
-    ],
   }
 );
 

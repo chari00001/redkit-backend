@@ -14,6 +14,8 @@ exports.createCommunity = async (req, res) => {
       cover_image_url,
     } = req.body;
 
+    console.log("Community creation requested with data:", req.body);
+
     // User token'ından ID al
     const creatorId = req.user?.id;
     if (!creatorId) {
@@ -30,6 +32,21 @@ exports.createCommunity = async (req, res) => {
         .json({ message: "Bu isimde bir topluluk zaten var" });
     }
 
+    // tags değerini düzgün bir şekilde dönüştür
+    let parsedTags = [];
+    if (tags) {
+      if (typeof tags === 'string') {
+        try {
+          parsedTags = JSON.parse(tags);
+        } catch (e) {
+          console.error("Tags parsing error:", e);
+          parsedTags = tags.split(',').map(tag => tag.trim());
+        }
+      } else if (Array.isArray(tags)) {
+        parsedTags = tags;
+      }
+    }
+
     // Yeni topluluk oluştur
     const community = await Community.create({
       creator_id: creatorId,
@@ -37,11 +54,13 @@ exports.createCommunity = async (req, res) => {
       description,
       visibility: visibility || "public",
       rules,
-      tags: tags ? (typeof tags === "string" ? JSON.parse(tags) : tags) : [],
+      tags: parsedTags,
       is_featured: is_featured || false,
       cover_image_url,
       member_count: 1, // Oluşturan kişi otomatik olarak üye olur
     });
+
+    console.log("Community created:", community.id);
 
     // Topluluğu oluşturan kişiyi aynı zamanda yönetici olarak ekle
     await UserCommunity.create({

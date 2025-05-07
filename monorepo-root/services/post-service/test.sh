@@ -24,7 +24,7 @@ DELETE="🗑️"
 
 # Post servisi test scripti
 # BASE_URL'i kendi ortamınıza göre ayarlayın
-BASE_URL="http://localhost:3001/posts"
+BASE_URL="http://localhost:3002/posts"
 # Test sonuçlarını tutmak için dizi
 results=()
 POST_ID=""

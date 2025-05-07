@@ -25,8 +25,9 @@ app.get("/", (req, res) => {
   });
 });
 
-// Post rotalarını ekle
+// Post rotalarını ekle - 2 farklı rotada yönlendirme ekle, test ve API kullanımı için
 app.use("/posts", postRoutes);
+app.use("/api/posts", postRoutes);
 
 // Hata yakalama middleware'i
 app.use((err, req, res, next) => {

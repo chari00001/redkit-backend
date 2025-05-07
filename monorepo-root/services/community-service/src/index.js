@@ -11,14 +11,32 @@ const app = express();
 // Ortam değişkenlerini yükle
 require("dotenv").config();
 
+// CORS yapılandırma
+const corsOptions = {
+  origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost', '*'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Origin', 'Accept'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  optionsSuccessStatus: 200
+};
+
 // Middleware'leri ayarla
-app.use(cors());
-app.use(helmet());
+app.use(cors(corsOptions));
+app.use(helmet({
+  contentSecurityPolicy: false, // Development ortamında geliştirmeyi kolaylaştırmak için
+  crossOriginEmbedderPolicy: false,
+  xssFilter: true
+}));
 app.use(morgan("combined"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// OPTIONS isteklerini doğrudan yanıtla
+app.options('*', cors(corsOptions));
+
 // API rotalarını yükle
+app.use("/", routes); // Doğrudan ana dizin için route'lara erişim sağla
 app.use("/api", routes);
 
 // Ana rota
@@ -45,7 +63,7 @@ app.use((req, res) => {
 });
 
 // Sunucuyu başlat
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3005;
 
 // Veritabanı modelleri ve ilişkileri kur
 const models = require("./models");
@@ -57,12 +75,10 @@ const models = require("./models");
     await sequelize.authenticate();
     console.log("Veritabanı bağlantısı başarılı.");
 
-    // Tabloları senkronize et (development için, production'da migration kullanılmalı)
-    if (process.env.NODE_ENV !== "production") {
-      await sequelize.sync({ alter: true });
-      console.log("Veritabanı tabloları senkronize edildi.");
-    }
-
+    // Tabloları senkronize etmeyi atlayarak doğrudan başlat
+    // Development ortamında bile alter:true kullanmak riskli olabilir
+    // Senkronizasyonu atlıyoruz, migrate etmeden çalıştırmayı deniyoruz
+    
     // Sunucuyu dinlemeye başla
     app.listen(PORT, () => {
       console.log(`Community Service sunucusu ${PORT} portunda çalışıyor.`);
