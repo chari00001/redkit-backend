@@ -5,6 +5,7 @@ const { Op } = require("sequelize");
 const Post = require("./post.model");
 const Like = require("./like.model");
 const Comment = require("./comment.model");
+const CommentLike = require("./comment.model").CommentLike;
 
 // Diğer servisler için dışarıdan referans gösterecek User modeli tanımlama
 const User = sequelize.define(
@@ -33,13 +34,18 @@ if (Like.associate) {
 }
 
 if (Comment.associate) {
-  Comment.associate({ User, Post });
+  Comment.associate({ User, Post, Comment });
+}
+
+if (CommentLike.associate) {
+  CommentLike.associate({ User, Comment });
 }
 
 module.exports = {
   Post,
   Like,
   Comment,
+  CommentLike,
   User,
   Op,
 };

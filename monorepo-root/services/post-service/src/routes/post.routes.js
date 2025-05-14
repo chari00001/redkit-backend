@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { body } = require("express-validator");
 const postController = require("../controllers/post.controller");
+const commentController = require("../controllers/comment.controller");
 const validationMiddleware = require("../middleware/validation.middleware.js");
 
 // Test middleware
@@ -70,5 +71,49 @@ router.post("/:id/like", testAuth, postController.toggleLike);
 
 // Post paylaşma
 router.post("/:id/share", testAuth, postController.sharePost);
+
+// YORUM ROTALARI
+
+// Post yorumlarını getirme
+router.get("/:postId/comments", testAuth, commentController.getPostComments);
+
+// Yorum oluşturma
+router.post(
+  "/:postId/comments",
+  testAuth,
+  [
+    body("content").trim().notEmpty().withMessage("Yorum içeriği gereklidir"),
+    body("parent_id").optional().isInt().withMessage("Geçersiz parent_id"),
+    body("anonymous")
+      .optional()
+      .isBoolean()
+      .withMessage("anonymous boolean olmalıdır"),
+  ],
+  validationMiddleware,
+  commentController.createComment
+);
+
+// Yorum güncelleme
+router.put(
+  "/:postId/comments/:commentId",
+  testAuth,
+  [body("content").trim().notEmpty().withMessage("Yorum içeriği gereklidir")],
+  validationMiddleware,
+  commentController.updateComment
+);
+
+// Yorum silme
+router.delete(
+  "/:postId/comments/:commentId",
+  testAuth,
+  commentController.deleteComment
+);
+
+// Yorum beğenme/beğenmeme
+router.post(
+  "/:postId/comments/:commentId/like",
+  testAuth,
+  commentController.toggleCommentLike
+);
 
 module.exports = router;

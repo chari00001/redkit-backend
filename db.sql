@@ -34,6 +34,7 @@ CREATE TABLE Users (
 CREATE TABLE Posts (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
+    community_id INTEGER REFERENCES Communities(id) ON DELETE SET NULL,
     title VARCHAR(255) NOT NULL,
     content TEXT,
     media_url VARCHAR(255),

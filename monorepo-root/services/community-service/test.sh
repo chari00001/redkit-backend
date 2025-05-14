@@ -4,7 +4,7 @@
 # Gerekli değişkenleri ayarlayın
 COMMUNITY_BASE_URL="http://localhost:3002/api/communities"
 # Test token'ı
-TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzQ2NTY4ODA5LCJleHAiOjE3NDY2NTUyMDl9.O9YahKCOf7O5ldEejRltfwJ-qTUsglOGgero1DcM3fI"
+TOKEN=""eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzQ3MjEwNzcyLCJleHAiOjE3NDcyOTcxNzJ9.jKHkiK7mi6pk3wgYASRN3iVjFfxPkeK-SnemoDQo4MU""
 
 # Format için renk kodları
 GREEN='\033[0;32m'

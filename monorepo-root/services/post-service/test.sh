@@ -21,6 +21,8 @@ COMMENT="💬"
 SHARE="🔄"
 LIST="📋"
 DELETE="🗑️"
+REPLY="↩️"
+EDIT="✏️"
 
 # Post servisi test scripti
 # BASE_URL'i kendi ortamınıza göre ayarlayın
@@ -28,6 +30,8 @@ BASE_URL="http://localhost:3001/posts"
 # Test sonuçlarını tutmak için dizi
 results=()
 POST_ID=""
+COMMENT_ID=""
+REPLY_ID=""
 
 # === Test Hazırlık ===
 # Test middleware'ı, API çağrılarında req.user = { id: 3, email: "cagri@gmail.com" } olarak ayarlanıyor
@@ -144,8 +148,135 @@ else
   results+=("${RED}${CROSS} Post paylaşma başarısız: $error_message${NC}")
 fi
 
-# 8. Post Silme (En son yapılmalı)
-echo -e "\n${BOLD}${DELETE} [8] /posts/:id (DELETE) - Silme${NC}"
+# === YORUM TESTLERİ ===
+echo -e "\n${BOLD}${BLUE}🧪 Yorum API Testleri${NC}"
+echo -e "${BLUE}==================================${NC}"
+
+# 8. Yorum Oluşturma
+echo -e "\n${BOLD}${COMMENT} [8] /posts/:postId/comments (POST) - Yorum Oluşturma${NC}"
+CREATE_COMMENT_RESPONSE=$(curl -s -X POST "$BASE_URL/$POST_ID/comments" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "Bu bir test yorumudur.",
+    "anonymous": false
+  }')
+CREATE_COMMENT_SUCCESS=$(echo $CREATE_COMMENT_RESPONSE | jq -r '.success')
+COMMENT_ID=$(echo $CREATE_COMMENT_RESPONSE | jq -r '.data.id')
+
+if [ "$CREATE_COMMENT_SUCCESS" == "true" ] && [ "$COMMENT_ID" != "null" ] && [ "$COMMENT_ID" != "" ]; then
+  results+=("${GREEN}${CHECK} Yorum oluşturma başarılı (ID: $COMMENT_ID)${NC}")
+else
+  error_message=$(echo $CREATE_COMMENT_RESPONSE | jq -r '.message // .error // "Bilinmeyen hata"')
+  results+=("${RED}${CROSS} Yorum oluşturma başarısız: $error_message${NC}")
+  # Varsayılan bir ID kullan
+  COMMENT_ID="1"
+  results+=("${YELLOW}${WARNING} Yorum oluşturma başarısız olduğu için varsayılan ID ($COMMENT_ID) kullanılıyor${NC}")
+fi
+
+# 9. Yoruma Yanıt Oluşturma
+echo -e "\n${BOLD}${REPLY} [9] /posts/:postId/comments (POST) - Yoruma Yanıt Oluşturma${NC}"
+CREATE_REPLY_RESPONSE=$(curl -s -X POST "$BASE_URL/$POST_ID/comments" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"content\": \"Bu bir yanıt yorumudur.\",
+    \"parent_id\": $COMMENT_ID,
+    \"anonymous\": false
+  }")
+CREATE_REPLY_SUCCESS=$(echo $CREATE_REPLY_RESPONSE | jq -r '.success')
+REPLY_ID=$(echo $CREATE_REPLY_RESPONSE | jq -r '.data.id')
+
+if [ "$CREATE_REPLY_SUCCESS" == "true" ] && [ "$REPLY_ID" != "null" ] && [ "$REPLY_ID" != "" ]; then
+  results+=("${GREEN}${CHECK} Yanıt yorumu oluşturma başarılı (ID: $REPLY_ID)${NC}")
+else
+  error_message=$(echo $CREATE_REPLY_RESPONSE | jq -r '.message // .error // "Bilinmeyen hata"')
+  results+=("${RED}${CROSS} Yanıt yorumu oluşturma başarısız: $error_message${NC}")
+  # Varsayılan bir ID kullan
+  REPLY_ID="2"
+  results+=("${YELLOW}${WARNING} Yanıt yorumu oluşturma başarısız olduğu için varsayılan ID ($REPLY_ID) kullanılıyor${NC}")
+fi
+
+# 10. Post için Yorumları Getirme
+echo -e "\n${BOLD}${LIST} [10] /posts/:postId/comments (GET) - Yorumları Getirme${NC}"
+GET_COMMENTS_RESPONSE=$(curl -s "$BASE_URL/$POST_ID/comments")
+GET_COMMENTS_SUCCESS=$(echo $GET_COMMENTS_RESPONSE | jq -r '.success')
+
+if [ "$GET_COMMENTS_SUCCESS" == "true" ]; then
+  comments_count=$(echo $GET_COMMENTS_RESPONSE | jq '.data.comments | length')
+  results+=("${GREEN}${CHECK} Yorumları getirme başarılı (Toplam: $comments_count)${NC}")
+else
+  error_message=$(echo $GET_COMMENTS_RESPONSE | jq -r '.message // .error // "Bilinmeyen hata"')
+  results+=("${RED}${CROSS} Yorumları getirme başarısız: $error_message${NC}")
+fi
+
+# 11. Yoruma Yanıtları Getirme
+echo -e "\n${BOLD}${LIST} [11] /posts/:postId/comments?parent_id=:commentId (GET) - Yoruma Yanıtları Getirme${NC}"
+GET_REPLIES_RESPONSE=$(curl -s "$BASE_URL/$POST_ID/comments?parent_id=$COMMENT_ID")
+GET_REPLIES_SUCCESS=$(echo $GET_REPLIES_RESPONSE | jq -r '.success')
+
+if [ "$GET_REPLIES_SUCCESS" == "true" ]; then
+  replies_count=$(echo $GET_REPLIES_RESPONSE | jq '.data.comments | length')
+  results+=("${GREEN}${CHECK} Yoruma yanıtları getirme başarılı (Toplam: $replies_count)${NC}")
+else
+  error_message=$(echo $GET_REPLIES_RESPONSE | jq -r '.message // .error // "Bilinmeyen hata"')
+  results+=("${RED}${CROSS} Yoruma yanıtları getirme başarısız: $error_message${NC}")
+fi
+
+# 12. Yorum Güncelleme
+echo -e "\n${BOLD}${EDIT} [12] /posts/:postId/comments/:commentId (PUT) - Yorum Güncelleme${NC}"
+UPDATE_COMMENT_RESPONSE=$(curl -s -X PUT "$BASE_URL/$POST_ID/comments/$COMMENT_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "Bu yorum güncellendi."
+  }')
+UPDATE_COMMENT_SUCCESS=$(echo $UPDATE_COMMENT_RESPONSE | jq -r '.success')
+
+if [ "$UPDATE_COMMENT_SUCCESS" == "true" ]; then
+  results+=("${GREEN}${CHECK} Yorum güncelleme başarılı${NC}")
+else
+  error_message=$(echo $UPDATE_COMMENT_RESPONSE | jq -r '.message // .error // "Bilinmeyen hata"')
+  results+=("${RED}${CROSS} Yorum güncelleme başarısız: $error_message${NC}")
+fi
+
+# 13. Yorum Beğenme
+echo -e "\n${BOLD}${LIKE} [13] /posts/:postId/comments/:commentId/like (POST) - Yorum Beğenme${NC}"
+LIKE_COMMENT_RESPONSE=$(curl -s -X POST "$BASE_URL/$POST_ID/comments/$COMMENT_ID/like")
+LIKE_COMMENT_SUCCESS=$(echo $LIKE_COMMENT_RESPONSE | jq -r '.success')
+
+if [ "$LIKE_COMMENT_SUCCESS" == "true" ]; then
+  message=$(echo $LIKE_COMMENT_RESPONSE | jq -r '.message')
+  results+=("${GREEN}${CHECK} Yorum beğenme başarılı ($message)${NC}")
+else
+  error_message=$(echo $LIKE_COMMENT_RESPONSE | jq -r '.message // .error // "Bilinmeyen hata"')
+  results+=("${RED}${CROSS} Yorum beğenme başarısız: $error_message${NC}")
+fi
+
+# 14. Yorum Beğenmekten Vazgeçme
+echo -e "\n${BOLD}${LIKE} [14] /posts/:postId/comments/:commentId/like (POST) - Yorum Beğenmekten Vazgeçme${NC}"
+UNLIKE_COMMENT_RESPONSE=$(curl -s -X POST "$BASE_URL/$POST_ID/comments/$COMMENT_ID/like")
+UNLIKE_COMMENT_SUCCESS=$(echo $UNLIKE_COMMENT_RESPONSE | jq -r '.success')
+
+if [ "$UNLIKE_COMMENT_SUCCESS" == "true" ]; then
+  message=$(echo $UNLIKE_COMMENT_RESPONSE | jq -r '.message')
+  results+=("${GREEN}${CHECK} Yorum beğenmekten vazgeçme başarılı ($message)${NC}")
+else
+  error_message=$(echo $UNLIKE_COMMENT_RESPONSE | jq -r '.message // .error // "Bilinmeyen hata"')
+  results+=("${RED}${CROSS} Yorum beğenmekten vazgeçme başarısız: $error_message${NC}")
+fi
+
+# 15. Yorumu Silme
+echo -e "\n${BOLD}${DELETE} [15] /posts/:postId/comments/:commentId (DELETE) - Yorumu Silme${NC}"
+DELETE_COMMENT_RESPONSE=$(curl -s -X DELETE "$BASE_URL/$POST_ID/comments/$COMMENT_ID")
+DELETE_COMMENT_SUCCESS=$(echo $DELETE_COMMENT_RESPONSE | jq -r '.success')
+
+if [ "$DELETE_COMMENT_SUCCESS" == "true" ]; then
+  results+=("${GREEN}${CHECK} Yorumu silme başarılı${NC}")
+else
+  error_message=$(echo $DELETE_COMMENT_RESPONSE | jq -r '.message // .error // "Bilinmeyen hata"')
+  results+=("${RED}${CROSS} Yorumu silme başarısız: $error_message${NC}")
+fi
+
+# 16. Post Silme (En son yapılmalı)
+echo -e "\n${BOLD}${DELETE} [16] /posts/:id (DELETE) - Post Silme${NC}"
 DELETE_RESPONSE=$(curl -s -X DELETE "$BASE_URL/$POST_ID")
 DELETE_SUCCESS=$(echo $DELETE_RESPONSE | jq -r '.success')
 
@@ -156,8 +287,8 @@ else
   results+=("${RED}${CROSS} Post silme başarısız: $error_message${NC}")
 fi
 
-# 9. Silinen Postu Tekrar Getirmeyi Deneme (404 beklenir)
-echo -e "\n${BOLD}${INFO} [9] /posts/:id (GET) - Silinmiş Post Kontrolü${NC}"
+# 17. Silinen Postu Tekrar Getirmeyi Deneme (404 beklenir)
+echo -e "\n${BOLD}${INFO} [17] /posts/:id (GET) - Silinmiş Post Kontrolü${NC}"
 # HTTP durum kodunu almak için -o /dev/null ve -w kullanıyoruz
 DELETED_GET_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/$POST_ID")
 

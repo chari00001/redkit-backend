@@ -31,6 +31,7 @@ Table Users {
 Table Posts {
     id int [pk, increment, not null] // Primary key, auto-incremented
     user_id int [ref: > Users.id, not null] // Foreign key linking to Users
+    community_id int [ref: > Communities.id not null] // Foreign key linking to Communities
     title varchar(255) [not null] // Post title
     content text // Main post content
     media_url varchar(255) // URL for associated images or videos
