@@ -11,7 +11,7 @@ const userRoutes = require("./routes/user.routes");
 
 // Uygulama yapılandırması
 const app = express();
-const PORT = 3010;
+const PORT = 3001;
 console.log(`PORT: ${PORT}`);
 
 // Middleware

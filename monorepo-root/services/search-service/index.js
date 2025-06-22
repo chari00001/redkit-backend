@@ -39,7 +39,7 @@ app.use((req, res) => {
 });
 
 // Sunucuyu dinle
-const PORT = process.env.PORT || 3003;
+const PORT = process.env.PORT || 3004;
 app.listen(PORT, () => {
   console.log(`Arama servisi ${PORT} portunda çalışıyor`);
 });

@@ -462,7 +462,7 @@ exports.getAllUsers = async (req, res) => {
     });
 
     res.json({
-      users,
+      users: users || [],
       totalPages: Math.ceil(count / limit),
       currentPage: page,
       totalUsers: count,
@@ -742,7 +742,7 @@ exports.getFollowers = async (req, res) => {
     });
 
     res.json({
-      followers,
+      followers: followers || [],
       pagination: {
         total: totalFollowers,
         page,
@@ -789,7 +789,7 @@ exports.getFollowing = async (req, res) => {
     });
 
     res.json({
-      following,
+      following: following || [],
       pagination: {
         total: totalFollowing,
         page,

@@ -27,6 +27,11 @@ const Like = sequelize.define(
       allowNull: false,
       defaultValue: DataTypes.NOW,
     },
+    value: {
+      type: DataTypes.SMALLINT,
+      allowNull: false,
+      defaultValue: 1,
+    },
   },
   {
     timestamps: false,

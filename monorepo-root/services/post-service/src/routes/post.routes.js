@@ -4,6 +4,10 @@ const { body } = require("express-validator");
 const postController = require("../controllers/post.controller");
 const commentController = require("../controllers/comment.controller");
 const validationMiddleware = require("../middleware/validation.middleware.js");
+const {
+  uploadSingle,
+  handleUploadError,
+} = require("../middleware/upload.middleware");
 
 // Test middleware
 const testAuth = (req, res, next) => {
@@ -29,6 +33,28 @@ router.post(
   ],
   validationMiddleware,
   postController.createPost
+);
+
+// Resim ile birlikte post oluşturma
+router.post(
+  "/with-image",
+  testAuth,
+  uploadSingle,
+  handleUploadError,
+  [
+    body("title").trim().notEmpty().withMessage("Başlık gereklidir"),
+    body("content").trim().notEmpty().withMessage("İçerik gereklidir"),
+    body("visibility")
+      .optional()
+      .isIn(["public", "private", "followers"])
+      .withMessage("Geçersiz görünürlük değeri"),
+    body("tags").optional().isArray().withMessage("Etiketler dizi olmalıdır"),
+    body("allow_comments")
+      .optional()
+      .isBoolean()
+      .withMessage("allow_comments boolean olmalıdır"),
+  ],
+  postController.createPostWithImage
 );
 
 // Post güncelleme
@@ -66,11 +92,17 @@ router.get("/:id", testAuth, postController.getPost);
 // Post listesi
 router.get("/", postController.listPosts);
 
+// Kullanıcının postlarını getir
+router.get("/user/:userId", postController.getUserPosts);
+
 // Post beğenme/beğenmeme
 router.post("/:id/like", testAuth, postController.toggleLike);
 
 // Post paylaşma
 router.post("/:id/share", testAuth, postController.sharePost);
+
+// Post oylama (up / down / clear)
+router.post("/:id/vote", testAuth, postController.votePost);
 
 // YORUM ROTALARI
 
@@ -114,6 +146,15 @@ router.post(
   "/:postId/comments/:commentId/like",
   testAuth,
   commentController.toggleCommentLike
+);
+
+// Resim yükleme endpoint'i
+router.post(
+  "/upload-image",
+  testAuth,
+  uploadSingle,
+  handleUploadError,
+  postController.uploadImage
 );
 
 module.exports = router;

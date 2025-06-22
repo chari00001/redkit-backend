@@ -17,6 +17,14 @@ const Post = sequelize.define(
         key: "id",
       },
     },
+    community_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: "communities",
+        key: "id",
+      },
+    },
     title: {
       type: DataTypes.STRING(255),
       allowNull: false,

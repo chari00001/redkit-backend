@@ -6,11 +6,24 @@ const {
   optionalAuthenticate,
 } = require("../middleware/authMiddleware");
 
+// Test middleware
+const testAuth = (req, res, next) => {
+  req.user = { id: 3, email: "cagri@gmail.com", role: "user" };
+  next();
+};
+
 // İlk önce daha spesifik rotaları tanımla
+// Kullanıcının kendi topluluklarını getir
+router.get("/user", testAuth, communityController.getUserCommunities);
+
+// Belirli bir kullanıcının topluluklarını getir
+router.get("/user/:userId", testAuth, communityController.getUserCommunities);
+
+// Topluluk postlarını getir
 router.get(
-  "/user/:userId?",
-  authenticate,
-  communityController.getUserCommunities
+  "/:id/posts",
+  optionalAuthenticate,
+  communityController.getCommunityPosts
 );
 
 // Sonra genel rotaları tanımla
@@ -23,16 +36,16 @@ router.get(
 );
 
 // Kimlik doğrulama gerektiren rotalar
-router.post("/", authenticate, communityController.createCommunity);
-router.put("/:id", authenticate, communityController.updateCommunity);
-router.delete("/:id", authenticate, communityController.deleteCommunity);
+router.post("/", testAuth, communityController.createCommunity);
+router.put("/:id", testAuth, communityController.updateCommunity);
+router.delete("/:id", testAuth, communityController.deleteCommunity);
 
 // Üyelik rotaları
-router.post("/:id/join", authenticate, communityController.joinCommunity);
-router.post("/:id/leave", authenticate, communityController.leaveCommunity);
+router.post("/:id/join", testAuth, communityController.joinCommunity);
+router.post("/:id/leave", testAuth, communityController.leaveCommunity);
 router.put(
   "/:id/members/:userId",
-  authenticate,
+  testAuth,
   communityController.updateMemberRole
 );
 

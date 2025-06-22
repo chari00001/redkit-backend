@@ -229,7 +229,6 @@ exports.getPostComments = async (req, res) => {
     // Yorumları getir (sadece ana yorumlar veya belirli bir yorumun yanıtları)
     const where = {
       post_id: postId,
-      parent_id: parent_id === "null" ? null : parent_id,
     };
 
     const { count, rows } = await db.Comment.findAndCountAll({
@@ -237,9 +236,6 @@ exports.getPostComments = async (req, res) => {
       limit: parseInt(limit),
       offset: parseInt(offset),
       order: [["created_at", "DESC"]],
-      attributes: {
-        exclude: parent_id ? [] : ["parent_id"],
-      },
     });
 
     res.json({

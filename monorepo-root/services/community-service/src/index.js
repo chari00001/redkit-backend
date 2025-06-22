@@ -45,7 +45,7 @@ app.use((req, res) => {
 });
 
 // Sunucuyu başlat
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3004;
 
 // Veritabanı modelleri ve ilişkileri kur
 const models = require("./models");

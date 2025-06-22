@@ -3,6 +3,7 @@ const cors = require("cors");
 const morgan = require("morgan");
 const helmet = require("helmet");
 const bodyParser = require("body-parser");
+const path = require("path");
 require("dotenv").config();
 
 const postRoutes = require("./routes/post.routes");
@@ -17,6 +18,9 @@ app.use(morgan("dev"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Static dosya servisi - yüklenen resimler için
+app.use("/static/uploads", express.static(path.join(__dirname, "../uploads")));
+
 // Ana rota
 app.get("/", (req, res) => {
   res.json({
@@ -26,7 +30,7 @@ app.get("/", (req, res) => {
 });
 
 // Post rotalarını ekle
-app.use("/posts", postRoutes);
+app.use("/api/posts", postRoutes);
 
 // Hata yakalama middleware'i
 app.use((err, req, res, next) => {

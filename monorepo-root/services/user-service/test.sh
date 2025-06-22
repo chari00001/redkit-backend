@@ -22,7 +22,7 @@ FOLLOW="👥"
 ADMIN="👑"
 GEAR="⚙️"
 
-PORT=3010
+PORT=3001
 BASE_URL="http://localhost:$PORT/api/users"
 
 # Benzersiz kullanıcı bilgileri oluştur

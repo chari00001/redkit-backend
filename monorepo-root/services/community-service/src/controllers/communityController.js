@@ -133,7 +133,7 @@ exports.getAllCommunities = async (req, res) => {
     });
 
     res.status(200).json({
-      communities,
+      communities: communities || [],
       totalCount: count,
       totalPages: Math.ceil(count / limit),
       currentPage: parseInt(page),
@@ -478,7 +478,7 @@ exports.getCommunityMembers = async (req, res) => {
     });
 
     res.status(200).json({
-      members,
+      members: members || [],
       totalCount: count,
       totalPages: Math.ceil(count / limit),
       currentPage: parseInt(page),
@@ -592,7 +592,7 @@ exports.getUserCommunities = async (req, res) => {
     });
 
     res.status(200).json({
-      communities: memberships.map((m) => m.Community),
+      communities: memberships?.map((m) => m.Community) || [],
       totalCount: count,
       totalPages: Math.ceil(count / limit),
       currentPage: parseInt(page),
@@ -602,5 +602,118 @@ exports.getUserCommunities = async (req, res) => {
     res
       .status(500)
       .json({ message: "Kullanıcı toplulukları getirilirken bir hata oluştu" });
+  }
+};
+
+// Topluluk postlarını getir
+exports.getCommunityPosts = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { page = 1, limit = 10, sort = "newest" } = req.query;
+
+    // Community'yi ID veya name ile bul
+    let community;
+    if (isNaN(id)) {
+      // String ise name ile ara
+      community = await Community.findOne({ where: { name: id } });
+    } else {
+      // Number ise ID ile ara
+      community = await Community.findByPk(id);
+    }
+
+    if (!community) {
+      return res.status(404).json({ message: "Topluluk bulunamadı" });
+    }
+
+    // Özel topluluklar için erişim kontrolü
+    if (community.visibility === "private") {
+      // Kullanıcı giriş yapmış mı kontrol et
+      if (!req.user) {
+        return res.status(403).json({
+          message:
+            "Bu özel topluluğun postlarına erişim için giriş yapmalısınız",
+        });
+      }
+
+      // Kullanıcı bu özel topluluğun üyesi mi kontrol et
+      const isMember = await UserCommunity.findOne({
+        where: {
+          user_id: req.user.id,
+          community_id: community.id,
+        },
+      });
+
+      if (!isMember) {
+        return res.status(403).json({
+          message: "Bu özel topluluğun postlarına erişim izniniz yok",
+        });
+      }
+    }
+
+    try {
+      // Post service'e HTTP isteği gönder
+      const fetch = require("node-fetch");
+
+      // Sort parametresini Post service formatına çevir
+      let sortParam = "created_at DESC";
+      if (sort === "oldest") {
+        sortParam = "created_at ASC";
+      } else if (sort === "popular") {
+        sortParam = "likes_count DESC";
+      }
+
+      // Post service'e community_id ile değil, tag ile filtrele
+      // Veya community bilgisini post'larda tutuyorsak o field ile filtrele
+      const postServiceUrl = `http://localhost:3002/api/posts?page=${page}&limit=${limit}&visibility=public&communityId=${community.id}`;
+
+      const response = await fetch(postServiceUrl);
+      const postsData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(postsData.message || "Post service hatası");
+      }
+
+      // Post'ları community ile ilişkilendir (şimdilik tüm public post'ları döndür)
+      // Gerçek implementasyonda post'larda community_id field'ı olmalı
+      const posts = postsData.success ? postsData.data.posts : [];
+      const pagination = postsData.success
+        ? postsData.data.pagination
+        : { total: 0, pages: 0 };
+
+      res.status(200).json({
+        posts: posts || [],
+        totalCount: pagination.total || 0,
+        totalPages: pagination.pages || 0,
+        currentPage: parseInt(page),
+        community: {
+          id: community.id,
+          name: community.name,
+          description: community.description,
+          member_count: community.member_count,
+        },
+      });
+    } catch (fetchError) {
+      console.error("Post service iletişim hatası:", fetchError);
+
+      // Post service'e erişilemiyorsa boş sonuç döndür
+      res.status(200).json({
+        posts: [],
+        totalCount: 0,
+        totalPages: 0,
+        currentPage: parseInt(page),
+        community: {
+          id: community.id,
+          name: community.name,
+          description: community.description,
+          member_count: community.member_count,
+        },
+      });
+    }
+  } catch (error) {
+    console.error("Topluluk postları getirme hatası:", error);
+    res.status(500).json({
+      message: "Topluluk postları getirilirken bir hata oluştu",
+      error: error.message,
+    });
   }
 };

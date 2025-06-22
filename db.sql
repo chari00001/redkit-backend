@@ -202,3 +202,18 @@ CREATE TABLE Roles (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- ------------------------------------------------
+-- 13) USER TAG INTERACTIONS (Recommendation)
+-- ------------------------------------------------
+CREATE TABLE User_Tag_Interactions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
+    tag TEXT NOT NULL,
+    interaction_type VARCHAR(50) NOT NULL CHECK (interaction_type IN ('like','view','share','comment')),
+    interaction_count INTEGER NOT NULL DEFAULT 1,
+    last_interacted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, tag, interaction_type)
+);
+CREATE INDEX idx_uti_user_tag_type ON UserTagInteractions(user_id, tag, interaction_type);
+CREATE INDEX idx_uti_user_count ON UserTagInteractions(user_id, interaction_count DESC, last_interacted_at DESC);
